@@ -64,6 +64,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer fd.Close()
 	reader := csv.NewReader(fd)
 	// Skip header.
 	_, err = reader.Read()
@@ -78,36 +79,40 @@ func main() {
 			}
 			panic(err)
 		}
-		if len(record[2]) == 0 {
+		no := string(record[1])
+		if len(no) == 0 {
 			continue
 		}
-		storageFile := fmt.Sprintf("output/%s.json", string(record[2]))
+		storageFile := fmt.Sprintf("output/%s.json", no)
 		if exists(storageFile) {
 			continue
 		}
-		out, err := os.Create(storageFile)
-		if err != nil {
-			fmt.Println("Error creating file", storageFile, err)
-			continue
-		}
-		fmt.Println("Fetching", string(record[2]))
-		boards, err := fetch(record[2])
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		enc := json.NewEncoder(out)
-		if err := enc.Encode(boards); err != nil {
-			panic(err)
-		}
-		for _, board := range boards {
-			first, _ := utf8.DecodeRune([]byte(board.Name))
-			last, _ := utf8.DecodeLastRune([]byte(board.Name))
-			if first == targetFirst && last == targetLast {
-				fmt.Println(record)
-				break
+		func() {
+			out, err := os.Create(storageFile)
+			if err != nil {
+				fmt.Println("Error creating file", storageFile, err)
+				return
 			}
-		}
+			defer out.Close()
+			fmt.Println("Fetching", no)
+			boards, err := fetch(no)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			enc := json.NewEncoder(out)
+			if err := enc.Encode(boards); err != nil {
+				panic(err)
+			}
+			for _, board := range boards {
+				first, _ := utf8.DecodeRune([]byte(board.Name))
+				last, _ := utf8.DecodeLastRune([]byte(board.Name))
+				if first == targetFirst && last == targetLast {
+					fmt.Println(record)
+					break
+				}
+			}
+		}()
 		// break
 	}
 }
