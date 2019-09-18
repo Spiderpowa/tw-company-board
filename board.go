@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/go-resty/resty/v2"
@@ -42,6 +43,9 @@ func fetch(account string) (Boards, error) {
 		}).
 		Get("http://data.gcis.nat.gov.tw/od/data/api/4E5F7653-1B91-4DDC-99D5-468530FAE396?$format=json&$filter={filter}&$skip=0&$top=50")
 	if err != nil {
+		if strings.Contains(err.Error(), "unexpected end of JSON input") {
+			return nil, nil
+		}
 		return nil, err
 	}
 	board, ok := resp.Result().(*Boards)
