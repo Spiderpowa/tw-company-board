@@ -92,18 +92,18 @@ func main() {
 			continue
 		}
 		func() {
-			out, err := os.Create(storageFile)
-			if err != nil {
-				fmt.Println("Error creating file", storageFile, err)
-				return
-			}
-			defer out.Close()
 			fmt.Println("Fetching", no)
 			boards, err := fetch(no)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
+			out, err := os.Create(storageFile)
+			if err != nil {
+				fmt.Println("Error creating file", storageFile, err)
+				return
+			}
+			defer out.Close()
 			enc := json.NewEncoder(out)
 			if err := enc.Encode(boards); err != nil {
 				panic(err)
